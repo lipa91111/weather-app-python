@@ -38,34 +38,34 @@ WEATHER_CODES = {
 }
 
 WEATHER_ICONS = {
-    0: "☀️",
-    1: "🌤️",
+    0: "☀",
+    1: "☼",
     2: "⛅",
-    3: "☁️",
-    45: "🌫️",
-    48: "🌫️",
-    51: "🌦️",
-    53: "🌦️",
-    55: "🌧️",
-    56: "🌧️",
-    57: "🌧️",
-    61: "🌧️",
-    63: "🌧️",
-    65: "🌧️",
-    66: "🌧️",
-    67: "🌧️",
-    71: "🌨️",
-    73: "🌨️",
-    75: "🌨️",
-    77: "🌨️",
-    80: "🌦️",
-    81: "🌧️",
-    82: "🌧️",
-    85: "🌨️",
-    86: "🌨️",
-    95: "⛈️",
-    96: "⛈️",
-    99: "⛈️",
+    3: "☁",
+    45: "☁",
+    48: "☁",
+    51: "☔",
+    53: "☔",
+    55: "☔",
+    56: "☔",
+    57: "☔",
+    61: "☔",
+    63: "☔",
+    65: "☔",
+    66: "☔",
+    67: "☔",
+    71: "❄",
+    73: "❄",
+    75: "❄",
+    77: "❄",
+    80: "☔",
+    81: "☔",
+    82: "☔",
+    85: "❄",
+    86: "❄",
+    95: "⚡",
+    96: "⚡",
+    99: "⚡",
 }
 
 
@@ -172,8 +172,8 @@ class WeatherApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Pogoda")
-        self.geometry("520x560")
-        self.minsize(480, 520)
+        self.geometry("1200x720")
+        self.minsize(1100, 680)
         self.configure(bg="#f2f7ff")
 
         self.style = ttk.Style(self)
@@ -214,7 +214,7 @@ class WeatherApp(tk.Tk):
         current_weather_frame = ttk.Frame(self.result_frame)
         current_weather_frame.pack(anchor="w", pady=(8, 4))
 
-        self.weather_icon = ttk.Label(current_weather_frame, text="", font=("Segoe UI", 28))
+        self.weather_icon = ttk.Label(current_weather_frame, text="", font=("DejaVu Sans", 28))
         self.weather_icon.pack(side="left")
 
         self.weather_label = ttk.Label(current_weather_frame, text="")
@@ -226,7 +226,7 @@ class WeatherApp(tk.Tk):
         self.forecast_label = ttk.Label(self.result_frame, text="Prognoza na kolejne 7 dni:", font=("Segoe UI", 12, "bold"))
         self.forecast_label.pack(anchor="w", pady=(8, 6))
 
-        self.forecast_container = ttk.Frame(self.result_frame)
+        self.forecast_container = tk.Frame(self.result_frame, bg="#f2f7ff")
         self.forecast_container.pack(fill="both", expand=True)
 
         self.search_weather()
@@ -266,27 +266,24 @@ class WeatherApp(tk.Tk):
 
             if data["next_days"]:
                 for index, item in enumerate(data["next_days"]):
-                    row = index // 3
-                    col = index % 3
-
-                    card = ttk.Frame(self.forecast_container, padding=8, relief="solid", borderwidth=1)
-                    card.grid(row=row, column=col, padx=6, pady=6, sticky="nsew")
+                    col = index
+                    card = tk.Frame(self.forecast_container, bg="#ffffff", bd=1, relief="solid", padx=12, pady=12, width=140, height=170)
+                    card.grid(row=0, column=col, padx=8, pady=8, sticky="nsew")
                     self.forecast_container.grid_columnconfigure(col, weight=1)
-                    self.forecast_container.grid_rowconfigure(row, weight=1)
 
-                    day_label = ttk.Label(card, text=f"{item['date']}", font=("Segoe UI", 10, "bold"))
+                    day_label = tk.Label(card, text=f"{item['date']}", font=("Segoe UI", 11, "bold"), bg="#ffffff", fg="#1d2a39")
                     day_label.pack(anchor="center")
 
-                    icon_label = ttk.Label(card, text=WEATHER_ICONS.get(item.get("code"), "❔"), font=("Segoe UI", 26))
-                    icon_label.pack(anchor="center", pady=(4, 2))
+                    icon_label = tk.Label(card, text=WEATHER_ICONS.get(item.get("code"), "?"), font=("DejaVu Sans", 30), bg="#ffffff", fg="#1d2a39")
+                    icon_label.pack(anchor="center", pady=(8, 6))
 
-                    condition_label = ttk.Label(card, text=item["condition"], font=("Segoe UI", 9), wraplength=120, justify="center")
+                    condition_label = tk.Label(card, text=item["condition"], font=("Segoe UI", 9), bg="#ffffff", fg="#1d2a39", wraplength=110, justify="center")
                     condition_label.pack(anchor="center")
 
-                    temp_label = ttk.Label(card, text=f"Max: {item['max']}°C\nMin: {item['min']}°C", font=("Segoe UI", 9, "bold"), justify="center")
-                    temp_label.pack(anchor="center", pady=(6, 0))
+                    temp_label = tk.Label(card, text=f"Max: {item['max']}°C\nMin: {item['min']}°C", font=("Segoe UI", 9, "bold"), bg="#ffffff", fg="#1d2a39", justify="center")
+                    temp_label.pack(anchor="center", pady=(8, 0))
             else:
-                empty_label = ttk.Label(self.forecast_container, text="Brak danych pogody na kolejne 7 dni.")
+                empty_label = tk.Label(self.forecast_container, text="Brak danych pogody na kolejne 7 dni.", bg="#f2f7ff", fg="#1d2a39")
                 empty_label.grid(row=0, column=0, padx=10, pady=10)
 
         except requests.RequestException as exc:
