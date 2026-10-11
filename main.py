@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from datetime import datetime
 import requests
 
 GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
@@ -70,7 +71,7 @@ def fetch_weather(city_name: str):
         "current": "temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m",
         "daily": "weather_code,temperature_2m_max,temperature_2m_min",
         "timezone": "auto",
-        "forecast_days": 3,
+        "forecast_days": 7,
     }
 
     response = requests.get(FORECAST_URL, params=params, timeout=10)
@@ -89,26 +90,45 @@ def fetch_weather(city_name: str):
         "humidity": current.get("relative_humidity_2m"),
         "wind": current.get("wind_speed_10m"),
         "weather": WEATHER_CODES.get(current_code, "Nieznany stan pogody"),
-        "max_temp": daily.get("temperature_2m_max", [None, None, None])[0],
-        "min_temp": daily.get("temperature_2m_min", [None, None, None])[0],
+        "max_temp": daily.get("temperature_2m_max", [None] * 7)[0],
+        "min_temp": daily.get("temperature_2m_min", [None] * 7)[0],
     }
 
     if daily.get("weather_code"):
-        result["next_days"] = [
-            {
-                "day": index,
-                "condition": WEATHER_CODES.get(code, "Nieznany stan pogody"),
-                "max": max_temp,
-                "min": min_temp,
-            }
-            for index, (code, max_temp, min_temp) in enumerate(
-                zip(
-                    daily.get("weather_code", []),
-                    daily.get("temperature_2m_max", []),
-                    daily.get("temperature_2m_min", []),
-                )
+        result["next_days"] = []
+        date_values = daily.get("time", [])
+        for index, (code, max_temp, min_temp) in enumerate(
+            zip(
+                daily.get("weather_code", []),
+                daily.get("temperature_2m_max", []),
+                daily.get("temperature_2m_min", []),
             )
-        ]
+        ):
+            date_str = date_values[index] if index < len(date_values) else None
+            try:
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                day_names = {
+                    "Mon": "Pon",
+                    "Tue": "Wto",
+                    "Wed": "Śro",
+                    "Thu": "Czw",
+                    "Fri": "Pią",
+                    "Sat": "Sob",
+                    "Sun": "Ndz",
+                }
+                day_name = day_names.get(date_obj.strftime("%a"), date_obj.strftime("%a"))
+            except (TypeError, ValueError):
+                day_name = f"Dzień {index + 1}"
+
+            result["next_days"].append(
+                {
+                    "day": index,
+                    "date": day_name,
+                    "condition": WEATHER_CODES.get(code, "Nieznany stan pogody"),
+                    "max": max_temp,
+                    "min": min_temp,
+                }
+            )
     else:
         result["next_days"] = []
 
@@ -164,10 +184,10 @@ class WeatherApp(tk.Tk):
         self.details_label = ttk.Label(self.result_frame, text="", justify="left")
         self.details_label.pack(anchor="w", pady=(0, 10))
 
-        self.forecast_label = ttk.Label(self.result_frame, text="Najbliższe dni:", font=("Segoe UI", 12, "bold"))
+        self.forecast_label = ttk.Label(self.result_frame, text="Prognoza na kolejne 7 dni:", font=("Segoe UI", 12, "bold"))
         self.forecast_label.pack(anchor="w", pady=(8, 6))
 
-        self.forecast_text = tk.Text(self.result_frame, height=8, wrap="word", font=("Segoe UI", 10), bg="#ffffff")
+        self.forecast_text = tk.Text(self.result_frame, height=10, wrap="word", font=("Segoe UI", 10), bg="#ffffff")
         self.forecast_text.pack(fill="both", expand=True)
         self.forecast_text.config(state="disabled")
 
@@ -204,11 +224,11 @@ class WeatherApp(tk.Tk):
                 lines = []
                 for item in data["next_days"]:
                     lines.append(
-                        f"Dzień {item['day'] + 1}: {item['condition']} | Max {item['max']}°C | Min {item['min']}°C"
+                        f"{item['date']} {item['day'] + 1}: {item['condition']} | Max {item['max']}°C | Min {item['min']}°C"
                     )
                 self.forecast_text.insert(tk.END, "\n".join(lines))
             else:
-                self.forecast_text.insert(tk.END, "Brak danych pogody na kolejne dni.")
+                self.forecast_text.insert(tk.END, "Brak danych pogody na kolejne 7 dni.")
             self.forecast_text.config(state="disabled")
 
         except requests.RequestException as exc:
