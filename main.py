@@ -37,6 +37,37 @@ WEATHER_CODES = {
     99: "Silna burza z gradem",
 }
 
+WEATHER_ICONS = {
+    0: "☀️",
+    1: "🌤️",
+    2: "⛅",
+    3: "☁️",
+    45: "🌫️",
+    48: "🌫️",
+    51: "🌦️",
+    53: "🌦️",
+    55: "🌧️",
+    56: "🌧️",
+    57: "🌧️",
+    61: "🌧️",
+    63: "🌧️",
+    65: "🌧️",
+    66: "🌧️",
+    67: "🌧️",
+    71: "🌨️",
+    73: "🌨️",
+    75: "🌨️",
+    77: "🌨️",
+    80: "🌦️",
+    81: "🌧️",
+    82: "🌧️",
+    85: "🌨️",
+    86: "🌨️",
+    95: "⛈️",
+    96: "⛈️",
+    99: "⛈️",
+}
+
 
 def geocode_city(city_name: str):
     params = {
@@ -86,6 +117,7 @@ def fetch_weather(city_name: str):
         "city": place["name"],
         "country": place["country"],
         "admin1": place["admin1"],
+        "weather_code": current_code,
         "temperature": current.get("temperature_2m"),
         "humidity": current.get("relative_humidity_2m"),
         "wind": current.get("wind_speed_10m"),
@@ -124,6 +156,7 @@ def fetch_weather(city_name: str):
                 {
                     "day": index,
                     "date": day_name,
+                    "code": code,
                     "condition": WEATHER_CODES.get(code, "Nieznany stan pogody"),
                     "max": max_temp,
                     "min": min_temp,
@@ -178,8 +211,14 @@ class WeatherApp(tk.Tk):
         self.temp_label = ttk.Label(self.result_frame, text="", style="Value.TLabel")
         self.temp_label.pack(anchor="w")
 
-        self.weather_label = ttk.Label(self.result_frame, text="")
-        self.weather_label.pack(anchor="w", pady=(8, 4))
+        current_weather_frame = ttk.Frame(self.result_frame)
+        current_weather_frame.pack(anchor="w", pady=(8, 4))
+
+        self.weather_icon = ttk.Label(current_weather_frame, text="", font=("Segoe UI", 28))
+        self.weather_icon.pack(side="left")
+
+        self.weather_label = ttk.Label(current_weather_frame, text="")
+        self.weather_label.pack(side="left", padx=(10, 0))
 
         self.details_label = ttk.Label(self.result_frame, text="", justify="left")
         self.details_label.pack(anchor="w", pady=(0, 10))
@@ -207,9 +246,14 @@ class WeatherApp(tk.Tk):
             if data["country"]:
                 display_name += f", {data['country']}"
 
+            current_code = data.get("weather_code")
+            weather_name = data["weather"]
+            weather_icon = WEATHER_ICONS.get(current_code, "❔")
+
             self.city_label.config(text=display_name)
             self.temp_label.config(text=f"{data['temperature']}°C")
-            self.weather_label.config(text=f"Pogoda: {data['weather']}")
+            self.weather_icon.config(text=weather_icon)
+            self.weather_label.config(text=f"Pogoda: {weather_name}")
             self.details_label.config(
                 text=(
                     f"Wilgotność: {data['humidity']}%\n"
@@ -223,8 +267,9 @@ class WeatherApp(tk.Tk):
             if data["next_days"]:
                 lines = []
                 for item in data["next_days"]:
+                    icon = WEATHER_ICONS.get(item.get("code"), "❔")
                     lines.append(
-                        f"{item['date']} {item['day'] + 1}: {item['condition']} | Max {item['max']}°C | Min {item['min']}°C"
+                        f"{icon} {item['date']} {item['day'] + 1}: {item['condition']} | Max {item['max']}°C | Min {item['min']}°C"
                     )
                 self.forecast_text.insert(tk.END, "\n".join(lines))
             else:
